@@ -1,0 +1,11 @@
+#
+# 缓存过期时间配置
+#
+# @see https://github.com/redisson/redisson/wiki/14.-%E7%AC%AC%E4%B8%89%E6%96%B9%E6%A1%86%E6%9E%B6%E6%95%B4%E5%90%88
+# @see org.redisson.spring.cache.CacheConfig
+#
+# 属性：
+# ttl：缓存生存时间，单位/毫秒
+# maxIdleTime：最大空闲时间，单位/毫秒
+# maxSize：最大长度。使用LRU算法剔除多余的元素。如果是0则不限制
+#

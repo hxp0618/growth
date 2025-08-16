@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.growth.dao.UserProfileMapper">
+
+    <!-- 通用结果映射 -->
+    <resultMap id="BaseResultMap" type="com.growth.entity.UserProfile">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="user_id" property="userId" jdbcType="BIGINT"/>
+        <result column="birth_date" property="birthDate" jdbcType="DATE"/>
+        <result column="height" property="height" jdbcType="DECIMAL"/>
+        <result column="weight" property="weight" jdbcType="DECIMAL"/>
+        <result column="allergies" property="allergies" jdbcType="VARCHAR"/>
+        <result column="medical_history" property="medicalHistory" jdbcType="LONGVARCHAR"/>
+        <result column="is_pregnant" property="isPregnant" jdbcType="TINYINT"/>
+        <result column="expected_delivery_date" property="expectedDeliveryDate" jdbcType="DATE"/>
+        <result column="last_menstrual_period" property="lastMenstrualPeriod" jdbcType="DATE"/>
+        <result column="pregnancy_notes" property="pregnancyNotes" jdbcType="LONGVARCHAR"/>
+        <result column="status" property="status" jdbcType="TINYINT"/>
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+        <result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>
+        <result column="create_by" property="createBy" jdbcType="BIGINT"/>
+        <result column="update_by" property="updateBy" jdbcType="BIGINT"/>
+        <result column="is_deleted" property="isDeleted" jdbcType="TINYINT"/>
+        <result column="version" property="version" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <!-- 用户个人信息响应结果映射 -->
+    <resultMap id="UserProfileResponseMap" type="com.growth.entity.response.UserProfileResponse">
+        <result column="user_id" property="userId" jdbcType="BIGINT"/>
+        <result column="nickname" property="nickname" jdbcType="VARCHAR"/>
+        <result column="birth_date" property="birthDate" jdbcType="DATE"/>
+        <result column="age" property="age" jdbcType="INTEGER"/>
+        <result column="height" property="height" jdbcType="DECIMAL"/>
+        <result column="weight" property="weight" jdbcType="DECIMAL"/>
+        <result column="bmi" property="bmi" jdbcType="DECIMAL"/>
+        <result column="allergies" property="allergies" jdbcType="VARCHAR"/>
+        <result column="medical_history" property="medicalHistory" jdbcType="LONGVARCHAR"/>
+        <result column="is_pregnant" property="isPregnant" jdbcType="TINYINT"/>
+        <result column="expected_delivery_date" property="expectedDeliveryDate" jdbcType="DATE"/>
+        <result column="last_menstrual_period" property="lastMenstrualPeriod" jdbcType="DATE"/>
+        <result column="pregnancy_notes" property="pregnancyNotes" jdbcType="LONGVARCHAR"/>
+        <result column="pregnancy_weeks" property="pregnancyWeeks" jdbcType="INTEGER"/>
+        <result column="status" property="status" jdbcType="TINYINT"/>
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+        <result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <!-- 根据用户ID查询个人信息 -->
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT * FROM user_profiles 
+        WHERE user_id = #{userId} 
+        AND is_deleted = 0
+        LIMIT 1
+    </select>
+
+    <!-- 根据用户ID查询个人信息详情 -->
+    <select id="selectDetailByUserId" resultMap="UserProfileResponseMap">
+        SELECT 
+            up.user_id,
+            u.nickname,
+            up.birth_date,
+            CASE 
+                WHEN up.birth_date IS NOT NULL THEN 
+                    TIMESTAMPDIFF(YEAR, up.birth_date, CURDATE())
+                ELSE NULL 
+            END AS age,
+            up.height,
+            up.weight,
+            CASE 
+                WHEN up.height IS NOT NULL AND up.weight IS NOT NULL AND up.height > 0 THEN 
+                    ROUND(up.weight / POWER(up.height / 100, 2), 1)
+                ELSE NULL 
+            END AS bmi,
+            up.allergies,
+            up.medical_history,
+            up.is_pregnant,
+            up.expected_delivery_date,
+            up.last_menstrual_period,
+            up.pregnancy_notes,
+            CASE 
+                WHEN up.last_menstrual_period IS NOT NULL THEN 
+                    FLOOR(DATEDIFF(CURDATE(), up.last_menstrual_period) / 7)
+                ELSE NULL 
+            END AS pregnancy_weeks,
+            up.status,
+            up.create_time,
+            up.update_time
+        FROM user_profiles up
+        LEFT JOIN sys_user u ON up.user_id = u.id AND u.is_deleted = 0
+        WHERE up.user_id = #{userId} 
+        AND up.is_deleted = 0
+        LIMIT 1
+    </select>
+
+</mapper>

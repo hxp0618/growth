@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.growth.dao.FamilyMapper">
+
+    <!-- 通用结果映射 -->
+    <resultMap id="BaseResultMap" type="com.growth.entity.Family">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="name" property="name" jdbcType="VARCHAR"/>
+        <result column="creator_id" property="creatorId" jdbcType="BIGINT"/>
+        <result column="invite_code" property="inviteCode" jdbcType="VARCHAR"/>
+        <result column="description" property="description" jdbcType="VARCHAR"/>
+        <result column="avatar" property="avatar" jdbcType="VARCHAR"/>
+        <result column="status" property="status" jdbcType="TINYINT"/>
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+        <result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>
+        <result column="create_by" property="createBy" jdbcType="BIGINT"/>
+        <result column="update_by" property="updateBy" jdbcType="BIGINT"/>
+        <result column="is_deleted" property="isDeleted" jdbcType="TINYINT"/>
+        <result column="version" property="version" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <!-- 家庭响应结果映射 -->
+    <resultMap id="FamilyResponseMap" type="com.growth.entity.response.FamilyResponse">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="name" property="name" jdbcType="VARCHAR"/>
+        <result column="creator_id" property="creatorId" jdbcType="BIGINT"/>
+        <result column="creator_name" property="creatorName" jdbcType="VARCHAR"/>
+        <result column="invite_code" property="inviteCode" jdbcType="VARCHAR"/>
+        <result column="description" property="description" jdbcType="VARCHAR"/>
+        <result column="avatar" property="avatar" jdbcType="VARCHAR"/>
+        <result column="status" property="status" jdbcType="TINYINT"/>
+        <result column="member_count" property="memberCount" jdbcType="INTEGER"/>
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+        <result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <!-- 家庭孕妇进度响应结果映射 -->
+    <resultMap id="FamilyPregnancyProgressMap" type="com.growth.entity.response.FamilyPregnancyProgressResponse">
+        <result column="family_id" property="familyId" jdbcType="BIGINT"/>
+        <result column="family_name" property="familyName" jdbcType="VARCHAR"/>
+        <collection property="pregnantWomen" ofType="com.growth.entity.response.FamilyPregnancyProgressResponse$PregnantWomanInfo">
+            <result column="user_id" property="userId" jdbcType="BIGINT"/>
+            <result column="nickname" property="nickname" jdbcType="VARCHAR"/>
+            <result column="avatar" property="avatar" jdbcType="VARCHAR"/>
+            <result column="role_name" property="roleName" jdbcType="VARCHAR"/>
+            <result column="expected_delivery_date" property="expectedDeliveryDate" jdbcType="DATE"/>
+            <result column="last_menstrual_period" property="lastMenstrualPeriod" jdbcType="DATE"/>
+            <result column="pregnancy_notes" property="pregnancyNotes" jdbcType="VARCHAR"/>
+            <association property="pregnancyProgress" javaType="com.growth.entity.response.FamilyPregnancyProgressResponse$PregnancyProgressInfo">
+                <result column="pregnancy_week" property="pregnancyWeek" jdbcType="INTEGER"/>
+                <result column="progress_percentage" property="progressPercentage" jdbcType="DECIMAL"/>
+                <result column="days_to_delivery" property="daysToDelivery" jdbcType="INTEGER"/>
+                <result column="baby_weight" property="babyWeight" jdbcType="DECIMAL"/>
+                <result column="fruit_comparison" property="fruitComparison" jdbcType="VARCHAR"/>
+                <result column="encouragement_message" property="encouragementMessage" jdbcType="VARCHAR"/>
+                <result column="pregnancy_stage" property="pregnancyStage" jdbcType="VARCHAR"/>
+                <result column="pregnancy_tips" property="pregnancyTips" jdbcType="VARCHAR"/>
+            </association>
+        </collection>
+    </resultMap>
+
+    <!-- 根据邀请码查询家庭 -->
+    <select id="selectByInviteCode" resultMap="BaseResultMap">
+        SELECT * FROM families 
+        WHERE invite_code = #{inviteCode} 
+        AND is_deleted = 0
+        LIMIT 1
+    </select>
+
+    <!-- 根据创建者ID查询家庭列表 -->
+    <select id="selectByCreatorId" resultMap="BaseResultMap">
+        SELECT * FROM families 
+        WHERE creator_id = #{creatorId} 
+        AND is_deleted = 0
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 分页查询家庭详细信息 -->
+    <select id="selectFamilyDetailPage" resultMap="FamilyResponseMap">
+        SELECT 
+            f.id,
+            f.name,
+            f.creator_id,
+            u.nickname AS creator_name,
+            f.invite_code,
+            f.description,
+            f.avatar,
+            f.status,
+            f.create_time,
+            f.update_time,
+            COALESCE(mc.member_count, 0) AS member_count
+        FROM families f
+        LEFT JOIN sys_user u ON f.creator_id = u.id AND u.is_deleted = 0
+        LEFT JOIN (
+            SELECT family_id, COUNT(*) AS member_count
+            FROM family_relations 
+            WHERE status = 1 AND is_deleted = 0
+            GROUP BY family_id
+        ) mc ON f.id = mc.family_id
+        WHERE f.is_deleted = 0
+        <if test="creatorId != null">
+            AND f.creator_id = #{creatorId}
+        </if>
+        <if test="status != null">
+            AND f.status = #{status}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND f.name LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        ORDER BY f.create_time DESC
+    </select>
+
+    <!-- 根据ID查询家庭详细信息 -->
+    <select id="selectFamilyDetailById" resultMap="FamilyResponseMap">
+        SELECT 
+            f.id,
+            f.name,
+            f.creator_id,
+            u.nickname AS creator_name,
+            f.invite_code,
+            f.description,
+            f.avatar,
+            f.status,
+            f.create_time,
+            f.update_time,
+            COALESCE(mc.member_count, 0) AS member_count
+        FROM families f
+        LEFT JOIN sys_user u ON f.creator_id = u.id AND u.is_deleted = 0
+        LEFT JOIN (
+            SELECT family_id, COUNT(*) AS member_count
+            FROM family_relations 
+            WHERE status = 1 AND is_deleted = 0
+            GROUP BY family_id
+        ) mc ON f.id = mc.family_id
+        WHERE f.id = #{id} 
+        AND f.is_deleted = 0
+    </select>
+
+    <!-- 根据用户ID查询用户参与的家庭列表 -->
+    <select id="selectFamiliesByUserId" resultMap="FamilyResponseMap">
+        SELECT
+            f.id,
+            f.name,
+            f.creator_id,
+            u.nickname AS creator_name,
+            f.invite_code,
+            f.description,
+            f.avatar,
+            f.status,
+            f.create_time,
+            f.update_time,
+            COALESCE(mc.member_count, 0) AS member_count
+        FROM families f
+        LEFT JOIN sys_user u ON f.creator_id = u.id AND u.is_deleted = 0
+        LEFT JOIN (
+            SELECT family_id, COUNT(*) AS member_count
+            FROM family_relations
+            WHERE status = 1 AND is_deleted = 0
+            GROUP BY family_id
+        ) mc ON f.id = mc.family_id
+        INNER JOIN family_relations fr ON f.id = fr.family_id
+        WHERE f.is_deleted = 0
+        AND fr.user_id = #{userId}
+        AND fr.status = 1
+        AND fr.is_deleted = 0
+        ORDER BY fr.joined_at DESC
+    </select>
+
+    <!-- 根据用户ID查询家庭孕妇进度 -->
+    <select id="selectFamilyPregnancyProgressByUserId" resultMap="FamilyPregnancyProgressMap">
+        SELECT
+            f.id AS family_id,
+            f.name AS family_name,
+            u.id AS user_id,
+            u.nickname,
+            u.avatar,
+            fr.role_name,
+            up.expected_delivery_date,
+            up.last_menstrual_period,
+            up.pregnancy_notes,
+            pp.pregnancy_week,
+            pp.progress_percentage,
+            CASE
+                WHEN up.expected_delivery_date IS NULL THEN NULL
+                ELSE GREATEST(0, DATEDIFF(up.expected_delivery_date, CURDATE()))
+            END AS days_to_delivery,
+            pp.baby_weight,
+            pp.fruit_comparison,
+            pp.encouragement_message,
+            CASE
+                WHEN pp.pregnancy_week IS NULL THEN '未知阶段'
+                WHEN pp.pregnancy_week &lt;= 12 THEN '孕早期'
+                WHEN pp.pregnancy_week &lt;= 28 THEN '孕中期'
+                ELSE '孕晚期'
+            END AS pregnancy_stage,
+            CASE
+                WHEN pp.pregnancy_week IS NULL THEN ''
+                WHEN pp.pregnancy_week &lt;= 12 THEN '注意休息，避免剧烈运动，补充叶酸'
+                WHEN pp.pregnancy_week &lt;= 28 THEN '均衡饮食，适量运动，定期产检'
+                ELSE '准备待产包，注意胎动，随时准备分娩'
+            END AS pregnancy_tips
+        FROM families f
+        INNER JOIN family_relations fr ON f.id = fr.family_id
+        INNER JOIN sys_user u ON fr.user_id = u.id
+        INNER JOIN user_profiles up ON u.id = up.user_id
+        LEFT JOIN pregnancy_progress pp ON pp.days_to_delivery &gt;= GREATEST(0, DATEDIFF(up.expected_delivery_date, CURDATE()))
+        WHERE f.is_deleted = 0
+        AND fr.is_deleted = 0
+        AND fr.status = 1
+        AND u.is_deleted = 0
+        AND up.is_pregnant = 1
+        AND up.expected_delivery_date IS NOT NULL
+        AND up.status = 1
+        AND EXISTS (
+            SELECT 1 FROM family_relations fr2
+            WHERE fr2.family_id = f.id
+            AND fr2.user_id = #{userId}
+            AND fr2.status = 1
+            AND fr2.is_deleted = 0
+        )
+        AND pp.id = (
+            SELECT pp2.id FROM pregnancy_progress pp2
+            WHERE pp2.days_to_delivery &gt;= GREATEST(0, DATEDIFF(up.expected_delivery_date, CURDATE()))
+            AND pp2.status = 1
+            ORDER BY pp2.days_to_delivery DESC
+            LIMIT 1
+        )
+        ORDER BY f.create_time DESC, up.expected_delivery_date ASC
+    </select>
+
+</mapper>

@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.growth.dao.UserDeviceTokenMapper">
+
+    <!-- 基础结果映射 -->
+    <resultMap id="BaseResultMap" type="com.growth.entity.UserDeviceToken">
+        <id column="id" property="id" />
+        <result column="user_id" property="userId" />
+        <result column="device_token" property="deviceToken" />
+        <result column="platform" property="platform" />
+        <result column="device_info" property="deviceInfo" />
+        <result column="app_version" property="appVersion" />
+        <result column="push_enabled" property="pushEnabled" />
+        <result column="last_active_time" property="lastActiveTime" />
+        <result column="status" property="status" />
+        <result column="failed_count" property="failedCount" />
+        <result column="last_failed_time" property="lastFailedTime" />
+        <result column="last_success_time" property="lastSuccessTime" />
+        <result column="inactive_reason" property="inactiveReason" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <result column="create_by" property="createBy" />
+        <result column="update_by" property="updateBy" />
+        <result column="is_deleted" property="isDeleted" />
+        <result column="version" property="version" />
+    </resultMap>
+
+    <!-- 根据用户ID获取活跃的设备Token列表 -->
+    <select id="selectActiveTokensByUserId" resultMap="BaseResultMap">
+        SELECT * FROM user_device_tokens
+        WHERE user_id = #{userId}
+          AND status = 1
+          AND push_enabled = TRUE
+          AND failed_count &lt; 6
+          AND is_deleted = FALSE
+        ORDER BY last_active_time DESC
+    </select>
+
+    <!-- 根据用户ID列表获取活跃的设备Token列表 -->
+    <select id="selectActiveTokensByUserIds" resultMap="BaseResultMap">
+        SELECT * FROM user_device_tokens
+        WHERE user_id IN
+        <foreach collection="userIds" item="userId" open="(" separator="," close=")">
+            #{userId}
+        </foreach>
+          AND status = 1
+          AND push_enabled = TRUE
+          AND failed_count &lt; 6
+          AND is_deleted = FALSE
+        ORDER BY user_id, last_active_time DESC
+    </select>
+
+    <!-- 更新失败次数 -->
+    <update id="updateFailureCount">
+        UPDATE user_device_tokens
+        SET failed_count = 
+            <choose>
+                <when test="increment">
+                    failed_count + 1
+                </when>
+                <otherwise>
+                    0
+                </otherwise>
+            </choose>,
+            <choose>
+                <when test="increment">
+                    last_failed_time = #{currentTime}
+                </when>
+                <otherwise>
+                    last_success_time = #{currentTime}
+                </otherwise>
+            </choose>,
+            update_time = #{currentTime}
+        WHERE device_token = #{deviceToken}
+          AND is_deleted = FALSE
+    </update>
+
+    <!-- 批量标记Token为不活跃 -->
+    <update id="batchDeactivateFailedTokens">
+        UPDATE user_device_tokens
+        SET status = 0,
+            inactive_reason = #{inactiveReason},
+            update_time = #{currentTime}
+        WHERE failed_count >= #{failedThreshold}
+          AND status = 1
+          AND is_deleted = FALSE
+    </update>
+
+    <!-- 根据设备Token禁用Token -->
+    <update id="disableTokenByDeviceToken">
+        UPDATE user_device_tokens
+        SET status = 0,
+            inactive_reason = #{inactiveReason},
+            update_time = #{currentTime}
+        WHERE device_token = #{deviceToken}
+          AND is_deleted = FALSE
+    </update>
+
+    <!-- 更新Token最后活跃时间 -->
+    <update id="updateLastActiveTime">
+        UPDATE user_device_tokens
+        SET last_active_time = #{lastActiveTime},
+            update_time = #{lastActiveTime}
+        WHERE device_token = #{deviceToken}
+          AND is_deleted = FALSE
+    </update>
+
+    <!-- 根据用户ID和平台查找Token -->
+    <select id="selectByUserIdAndPlatform" resultMap="BaseResultMap">
+        SELECT * FROM user_device_tokens
+        WHERE user_id = #{userId}
+          AND platform = #{platform}
+          AND is_deleted = FALSE
+        ORDER BY create_time DESC
+        LIMIT 1
+    </select>
+
+    <!-- 清理长期不活跃的Token记录 -->
+    <update id="cleanupInactiveTokens">
+        UPDATE user_device_tokens
+        SET is_deleted = TRUE,
+            update_time = #{currentTime}
+        WHERE status = 0
+          AND (last_active_time IS NULL OR last_active_time &lt; DATE_SUB(#{currentTime}, INTERVAL #{thresholdDays} DAY))
+          AND is_deleted = FALSE
+    </update>
+
+    <!-- 统计用户的活跃设备数量 -->
+    <select id="countActiveTokensByUserId" resultType="int">
+        SELECT COUNT(*)
+        FROM user_device_tokens
+        WHERE user_id = #{userId}
+          AND status = 1
+          AND push_enabled = TRUE
+          AND failed_count &lt; 6
+          AND is_deleted = FALSE
+    </select>
+
+    <!-- 获取失败次数超过阈值的Token列表 -->
+    <select id="selectFailedTokens" resultMap="BaseResultMap">
+        SELECT * FROM user_device_tokens
+        WHERE failed_count >= #{failedThreshold}
+          AND status = 1
+          AND is_deleted = FALSE
+        ORDER BY failed_count DESC, last_failed_time DESC
+    </select>
+
+</mapper>

@@ -1,0 +1,209 @@
+package com.growth.service;
+
+import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
+
+import jakarta.annotation.Resource;
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * 通知服务测试类（更新为新架构）
+ *
+ * @author growth
+ * @since 1.0
+ */
+@Slf4j
+@SpringBootTest
+@ActiveProfiles("dev")
+@Transactional
+public class NotificationServiceTest {
+
+    @Resource
+    private NotificationService notificationService;
+
+    @Test
+    public void testSendOneClickNotification() {
+        log.info("=== 测试一键通知功能 ===");
+
+        // 测试数据
+        String title = "测试通知";
+        String content = "这是一个测试通知，请查收";
+        String svgIcon = "<svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\"><path d=\"M12 2L13.5 8.5L20 7L14.5 12L20 17L13.5 15.5L12 22L10.5 15.5L4 17L9.5 12L4 7L10.5 8.5L12 2Z\" fill=\"#FF6B6B\"/></svg>";
+        Long senderId = 1L;
+        Long familyId = 1L;
+        List<Long> receiverIds = Arrays.asList(2L, 3L); // 假设有这些用户
+        Integer priority = 3; // 高优先级
+
+        try {
+            // 发送一键通知
+            Long recordId = notificationService.sendOneClickNotification(
+                    title, content, svgIcon, senderId, familyId, receiverIds, priority, null
+            );
+
+            log.info("一键通知发送成功，记录ID: {}", recordId);
+
+            // 在新架构下，一键通知直接创建推送记录，不创建模版
+            log.info("推送记录创建成功，记录ID: {}", recordId);
+
+        } catch (Exception e) {
+            log.error("一键通知测试失败", e);
+            throw e;
+        }
+    }
+
+    @Test
+    public void testCreateAndSendTemplate() {
+        log.info("=== 测试创建并使用模版发送通知 ===");
+
+        try {
+            // 创建通知模版
+            Notification template = new Notification()
+                    .setTitle("定时通知模版")
+                    .setContent("这是一个测试通知模版")
+                    .setCreatorId(1L)
+                    .setFamilyId(1L)
+                    .setType(2)
+                    .setPriority(2)
+                    .setCategory("custom")
+                    .setIsActive(true);
+
+            boolean created = notificationService.createNotification(template);
+            assert created;
+            log.info("通知模版创建成功，模版ID: {}", template.getId());
+
+            // 使用模版发送通知
+            boolean sent = notificationService.sendNotification(template.getId(), Arrays.asList(2L, 3L));
+            assert sent;
+            log.info("使用模版发送通知成功");
+
+        } catch (Exception e) {
+            log.error("创建并发送通知测试失败", e);
+            throw e;
+        }
+    }
+
+    @Test
+    public void testMarkAsRead() {
+        log.info("=== 测试标记通知已读 ===");
+
+        try {
+            // 先发送一个通知
+            Long notificationId = notificationService.sendOneClickNotification(
+                    "已读测试", "测试标记已读功能", null, 1L, 1L, Arrays.asList(2L), 2, null
+            );
+
+            // 标记为已读
+            boolean marked = notificationService.markAsRead(notificationId, 2L);
+            assert marked;
+            log.info("通知标记已读成功");
+
+            // 验证未读数量
+            int unreadCount = notificationService.getUnreadCount(2L, 1L);
+            log.info("用户未读通知数量: {}", unreadCount);
+
+        } catch (Exception e) {
+            log.error("标记通知已读测试失败", e);
+            throw e;
+        }
+    }
+
+    @Test
+    public void testBatchMarkAsRead() {
+        log.info("=== 测试批量标记通知已读 ===");
+
+        try {
+            // 发送多个通知
+            Long notificationId1 = notificationService.sendOneClickNotification(
+                    "批量测试1", "第一个通知", null, 1L, 1L, Arrays.asList(2L), 2, null
+            );
+            Long notificationId2 = notificationService.sendOneClickNotification(
+                    "批量测试2", "第二个通知", null, 1L, 1L, Arrays.asList(2L), 2, null
+            );
+
+            // 批量标记为已读
+            List<Long> notificationIds = Arrays.asList(notificationId1, notificationId2);
+            boolean marked = notificationService.batchMarkAsRead(notificationIds, 2L);
+            assert marked;
+            log.info("批量标记已读成功");
+
+        } catch (Exception e) {
+            log.error("批量标记通知已读测试失败", e);
+            throw e;
+        }
+    }
+
+    @Test
+    public void testGetNotificationStats() {
+        log.info("=== 测试获取通知统计信息 ===");
+
+        try {
+            // 发送一个通知
+            Long notificationId = notificationService.sendOneClickNotification(
+                    "统计测试", "测试统计功能", null, 1L, 1L, Arrays.asList(2L, 3L), 2, null
+            );
+
+            // 获取统计信息
+            Map<String, Object> stats = notificationService.getNotificationStats(notificationId);
+            log.info("通知统计信息: {}", stats);
+
+            assert stats != null;
+            assert stats.get("notification_id").equals(notificationId);
+
+        } catch (Exception e) {
+            log.error("获取通知统计信息测试失败", e);
+            throw e;
+        }
+    }
+
+    @Test
+    public void testGetFamilyNotificationStats() {
+        log.info("=== 测试获取家庭通知统计 ===");
+
+        try {
+            // 获取家庭通知统计
+            Map<String, Object> stats = notificationService.getFamilyNotificationStats(1L, null, null);
+            log.info("家庭通知统计: {}", stats);
+
+            assert stats != null;
+
+        } catch (Exception e) {
+            log.error("获取家庭通知统计测试失败", e);
+            throw e;
+        }
+    }
+
+    @Test
+    public void testProcessPendingNotifications() {
+        log.info("=== 测试处理待发送通知 ===");
+
+        try {
+            // 创建一个定时通知（已到发送时间）
+            Notification notification = new Notification()
+                    .setTitle("待发送通知测试")
+                    .setContent("这是一个待发送的通知")
+                    .setSenderId(1L)
+                    .setFamilyId(1L)
+                    .setType(2)
+                    .setPriority(2)
+                    .setScheduledTime(LocalDateTime.now().minusMinutes(1)) // 1分钟前应该发送
+                    .setStatus(0) // 草稿状态
+                    .setIsOneClick(false);
+
+            notificationService.createNotification(notification);
+
+            // 处理待发送通知
+            int processedCount = notificationService.processPendingNotifications();
+            log.info("处理待发送通知数量: {}", processedCount);
+
+        } catch (Exception e) {
+            log.error("处理待发送通知测试失败", e);
+            throw e;
+        }
+    }
+}

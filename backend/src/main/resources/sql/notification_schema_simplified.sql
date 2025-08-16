@@ -1,0 +1,90 @@
+
+
+-- 1. 通知模版表
+CREATE TABLE `family_notifications` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    `title` VARCHAR(100) NOT NULL COMMENT '通知标题',
+    `content` VARCHAR(1000) NOT NULL COMMENT '通知内容',
+    `description` VARCHAR(500) COMMENT '通知描述',
+    `svg_icon` TEXT COMMENT '通知SVG图标',
+    `card_back_color` VARCHAR(100) NOT NULL COMMENT '卡片背景颜色（十六进制颜色值）',
+    `creator_id` BIGINT NOT NULL COMMENT '创建者用户ID',
+    `family_id` BIGINT NOT NULL COMMENT '所属家庭ID',
+    `type` TINYINT DEFAULT 2 COMMENT '通知类型（1：系统通知，2：用户通知，3：紧急通知）',
+    `category` VARCHAR(50) DEFAULT 'custom' COMMENT '模板分类（custom：自定义，system：系统预设）',
+    `usage_count` INT DEFAULT 0 COMMENT '使用次数',
+    `is_active` BOOLEAN DEFAULT TRUE COMMENT '是否启用',
+    `receiver_role_ids` JSON COMMENT '接收人用户ID列表，为空则发送给所有家庭成员',
+    `remark` VARCHAR(500) COMMENT '备注信息',
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `create_by` BIGINT COMMENT '创建人ID',
+    `update_by` BIGINT COMMENT '更新人ID',
+    `is_deleted` BOOLEAN DEFAULT FALSE COMMENT '逻辑删除标识（0：未删除，1：已删除）',
+    `version` INT DEFAULT 0 COMMENT '版本号（乐观锁）',
+    PRIMARY KEY (`id`),
+    INDEX `idx_creator_id` (`creator_id`),
+    INDEX `idx_family_id` (`family_id`),
+    INDEX `idx_type` (`type`),
+    INDEX `idx_category` (`category`),
+    INDEX `idx_is_active` (`is_active`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='通知模版表';
+
+-- 2. 通知推送记录表（合并所有推送相关信息）
+CREATE TABLE `notification_push_records` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    `template_id` BIGINT COMMENT '使用的模板ID（可选）',
+    `title` VARCHAR(100) NOT NULL COMMENT '通知标题',
+    `content` VARCHAR(1000) NOT NULL COMMENT '通知内容',
+    `svg_icon` TEXT COMMENT '通知SVG图标',
+    `sender_id` BIGINT NOT NULL COMMENT '发送者用户ID',
+    `receiver_id` BIGINT NOT NULL COMMENT '接收者用户ID',
+    `family_id` BIGINT NOT NULL COMMENT '家庭ID',
+    `sent_time` DATETIME COMMENT '实际发送时间',
+    `type` TINYINT DEFAULT 2 COMMENT '通知类型（1：系统通知，2：用户通知，3：紧急通知）',
+    `priority` TINYINT DEFAULT 2 COMMENT '优先级（1：低，2：中，3：高）',
+    `is_one_click` BOOLEAN DEFAULT FALSE COMMENT '是否为一键通知',
+    -- 接收者相关信息
+    `role_id` BIGINT COMMENT '接收者在家庭中的角色ID',
+    `role_name` VARCHAR(50) COMMENT '接收者在家庭中的角色名称',
+    `is_read` BOOLEAN DEFAULT FALSE COMMENT '是否已读（0：未读，1：已读）',
+    `read_time` DATETIME COMMENT '阅读时间',
+
+    -- 推送相关信息
+    `device_token_id` BIGINT COMMENT '设备Token ID',
+    `device_token` VARCHAR(500) COMMENT '推送时使用的设备Token',
+    `platform` VARCHAR(20) COMMENT '设备平台',
+    `push_status` TINYINT DEFAULT 0 COMMENT '推送状态（0：未推送，1：推送成功，2：推送失败）',
+    `push_time` DATETIME COMMENT '推送时间',
+    `push_response` TEXT COMMENT '推送响应信息',
+    `error_code` VARCHAR(50) COMMENT '错误代码',
+    `error_message` VARCHAR(500) COMMENT '推送失败原因',
+    `retry_count` INT DEFAULT 0 COMMENT '重试次数',
+
+    -- 通用字段
+    `status` TINYINT DEFAULT 0 COMMENT '记录状态（0：正常，1：已删除，2：发送失败）',
+    `remark` VARCHAR(500) COMMENT '备注信息',
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `create_by` BIGINT COMMENT '创建人ID',
+    `update_by` BIGINT COMMENT '更新人ID',
+    `is_deleted` BOOLEAN DEFAULT FALSE COMMENT '逻辑删除标识（0：未删除，1：已删除）',
+    `version` INT DEFAULT 0 COMMENT '版本号（乐观锁）',
+
+    PRIMARY KEY (`id`),
+    INDEX `idx_template_id` (`template_id`),
+    INDEX `idx_sender_id` (`sender_id`),
+    INDEX `idx_receiver_id` (`receiver_id`),
+    INDEX `idx_family_id` (`family_id`),
+    INDEX `idx_device_token_id` (`device_token_id`),
+    INDEX `idx_role_id` (`role_id`),
+    INDEX `idx_status` (`status`),
+    INDEX `idx_push_status` (`push_status`),
+    INDEX `idx_is_read` (`is_read`),
+    INDEX `idx_sent_time` (`sent_time`),
+    INDEX `idx_push_time` (`push_time`),
+    INDEX `idx_read_time` (`read_time`),
+    INDEX `idx_create_time` (`create_time`),
+    INDEX `idx_priority` (`priority`),
+    INDEX `idx_is_one_click` (`is_one_click`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='通知推送记录表';

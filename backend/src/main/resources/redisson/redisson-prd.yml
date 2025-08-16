@@ -1,0 +1,32 @@
+#
+# 开发环境配置
+#
+# @see https://github.com/redisson/redisson/wiki/2.-%E9%85%8D%E7%BD%AE%E6%96%B9%E6%B3%95
+#
+
+# 编解码格式
+codec: !<org.redisson.codec.JsonJacksonCodec> { }
+# 传输模式
+# 可选参数：
+# NIO,
+# EPOLL - 需要依赖里有netty-transport-native-epoll包（Linux）
+# KQUEUE - 需要依赖里有 netty-transport-native-kqueue包（macOS）
+"transportMode": "NIO"
+
+singleServerConfig:
+  idleConnectionTimeout: 10000
+  connectTimeout: 10000
+  timeout: 3000
+  retryAttempts: 3
+  retryInterval: 1500
+  subscriptionsPerConnection: 5
+  clientName: null
+  address: "redis://10.72.11.26:6379"
+  password: "1qaz@WSX#EDC"
+  subscriptionConnectionMinimumIdleSize: 1
+  subscriptionConnectionPoolSize: 10
+  connectionMinimumIdleSize: 10
+  connectionPoolSize: 24
+  database: 5
+  dnsMonitoringInterval: 5000
+

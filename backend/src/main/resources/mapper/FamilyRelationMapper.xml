@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.growth.dao.FamilyRelationMapper">
+
+    <!-- 通用结果映射 -->
+    <resultMap id="BaseResultMap" type="com.growth.entity.FamilyRelation">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="family_id" property="familyId" jdbcType="BIGINT"/>
+        <result column="user_id" property="userId" jdbcType="BIGINT"/>
+        <result column="role_id" property="roleId" jdbcType="BIGINT"/>
+        <result column="role_name" property="roleName" jdbcType="VARCHAR"/>
+        <result column="permissions" property="permissions" jdbcType="VARCHAR" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result column="invited_by" property="invitedBy" jdbcType="BIGINT"/>
+        <result column="joined_at" property="joinedAt" jdbcType="TIMESTAMP"/>
+        <result column="status" property="status" jdbcType="TINYINT"/>
+        <result column="remark" property="remark" jdbcType="VARCHAR"/>
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+        <result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>
+        <result column="create_by" property="createBy" jdbcType="BIGINT"/>
+        <result column="update_by" property="updateBy" jdbcType="BIGINT"/>
+        <result column="is_deleted" property="isDeleted" jdbcType="TINYINT"/>
+        <result column="version" property="version" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <!-- 家庭成员响应结果映射 -->
+    <resultMap id="FamilyMemberResponseMap" type="com.growth.entity.response.FamilyMemberResponse">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="family_id" property="familyId" jdbcType="BIGINT"/>
+        <result column="user_id" property="userId" jdbcType="BIGINT"/>
+        <result column="username" property="username" jdbcType="VARCHAR"/>
+        <result column="nickname" property="nickname" jdbcType="VARCHAR"/>
+        <result column="avatar" property="avatar" jdbcType="VARCHAR"/>
+        <result column="role_id" property="roleId" jdbcType="BIGINT"/>
+        <result column="role_name" property="roleName" jdbcType="VARCHAR"/>
+        <result column="role_code" property="roleCode" jdbcType="VARCHAR"/>
+        <result column="permissions" property="permissions" jdbcType="VARCHAR" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result column="invited_by" property="invitedBy" jdbcType="BIGINT"/>
+        <result column="invited_by_name" property="invitedByName" jdbcType="VARCHAR"/>
+        <result column="joined_at" property="joinedAt" jdbcType="TIMESTAMP"/>
+        <result column="status" property="status" jdbcType="TINYINT"/>
+        <result column="remark" property="remark" jdbcType="VARCHAR"/>
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <!-- 根据家庭ID和用户ID查询关系 -->
+    <select id="selectByFamilyIdAndUserId" resultMap="BaseResultMap">
+        SELECT * FROM family_relations 
+        WHERE family_id = #{familyId} 
+        AND user_id = #{userId}
+        AND is_deleted = 0
+        LIMIT 1
+    </select>
+
+    <!-- 根据用户ID查询用户的家庭关系列表 -->
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT * FROM family_relations 
+        WHERE user_id = #{userId}
+        AND is_deleted = 0
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        ORDER BY joined_at DESC
+    </select>
+
+    <!-- 根据家庭ID查询家庭成员关系列表 -->
+    <select id="selectByFamilyId" resultMap="BaseResultMap">
+        SELECT * FROM family_relations 
+        WHERE family_id = #{familyId}
+        AND is_deleted = 0
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        ORDER BY joined_at ASC
+    </select>
+
+    <!-- 分页查询家庭成员详细信息 -->
+    <select id="selectFamilyMemberDetailPage" resultMap="FamilyMemberResponseMap">
+        SELECT 
+            fr.id,
+            fr.family_id,
+            fr.user_id,
+            u.username,
+            u.nickname,
+            u.avatar,
+            fr.role_id,
+            fr.role_name,
+            r.role_code,
+            fr.permissions,
+            fr.invited_by,
+            ib.nickname AS invited_by_name,
+            fr.joined_at,
+            fr.status,
+            fr.remark,
+            fr.create_time
+        FROM family_relations fr
+        LEFT JOIN sys_user u ON fr.user_id = u.id AND u.is_deleted = 0
+        LEFT JOIN family_roles r ON fr.role_id = r.id AND r.is_deleted = 0
+        LEFT JOIN sys_user ib ON fr.invited_by = ib.id AND ib.is_deleted = 0
+        WHERE fr.family_id = #{familyId}
+        AND fr.is_deleted = 0
+        <if test="status != null">
+            AND fr.status = #{status}
+        </if>
+        <if test="roleId != null">
+            AND fr.role_id = #{roleId}
+        </if>
+        ORDER BY fr.joined_at ASC
+    </select>
+
+    <!-- 根据家庭ID查询家庭成员详细信息列表 -->
+    <select id="selectFamilyMemberDetailList" resultMap="FamilyMemberResponseMap">
+        SELECT 
+            fr.id,
+            fr.family_id,
+            fr.user_id,
+            u.username,
+            u.nickname,
+            u.avatar,
+            fr.role_id,
+            fr.role_name,
+            r.role_code,
+            fr.permissions,
+            fr.invited_by,
+            ib.nickname AS invited_by_name,
+            fr.joined_at,
+            fr.status,
+            fr.remark,
+            fr.create_time
+        FROM family_relations fr
+        LEFT JOIN sys_user u ON fr.user_id = u.id AND u.is_deleted = 0
+        LEFT JOIN family_roles r ON fr.role_id = r.id AND r.is_deleted = 0
+        LEFT JOIN sys_user ib ON fr.invited_by = ib.id AND ib.is_deleted = 0
+        WHERE fr.family_id = #{familyId}
+        AND fr.is_deleted = 0
+        <if test="status != null">
+            AND fr.status = #{status}
+        </if>
+        ORDER BY fr.joined_at ASC
+    </select>
+
+    <!-- 根据ID查询家庭成员详细信息 -->
+    <select id="selectFamilyMemberDetailById" resultMap="FamilyMemberResponseMap">
+        SELECT 
+            fr.id,
+            fr.family_id,
+            fr.user_id,
+            u.username,
+            u.nickname,
+            u.avatar,
+            fr.role_id,
+            fr.role_name,
+            r.role_code,
+            fr.permissions,
+            fr.invited_by,
+            ib.nickname AS invited_by_name,
+            fr.joined_at,
+            fr.status,
+            fr.remark,
+            fr.create_time
+        FROM family_relations fr
+        LEFT JOIN sys_user u ON fr.user_id = u.id AND u.is_deleted = 0
+        LEFT JOIN family_roles r ON fr.role_id = r.id AND r.is_deleted = 0
+        LEFT JOIN sys_user ib ON fr.invited_by = ib.id AND ib.is_deleted = 0
+        WHERE fr.id = #{id}
+        AND fr.is_deleted = 0
+    </select>
+
+    <!-- 统计家庭成员数量 -->
+    <select id="countByFamilyId" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM family_relations 
+        WHERE family_id = #{familyId}
+        AND is_deleted = 0
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+    </select>
+
+    <!-- 检查用户是否已经是家庭成员 -->
+    <select id="existsByFamilyIdAndUserId" resultType="java.lang.Boolean">
+        SELECT COUNT(*) > 0 FROM family_relations 
+        WHERE family_id = #{familyId} 
+        AND user_id = #{userId}
+        AND is_deleted = 0
+    </select>
+
+</mapper>

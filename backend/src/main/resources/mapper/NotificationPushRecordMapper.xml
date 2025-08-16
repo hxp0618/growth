@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.growth.dao.NotificationPushRecordMapper">
+
+    <!-- 通用结果映射 -->
+    <resultMap id="BaseResultMap" type="com.growth.entity.NotificationPushRecord">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="template_id" property="templateId" jdbcType="BIGINT"/>
+        <result column="title" property="title" jdbcType="VARCHAR"/>
+        <result column="content" property="content" jdbcType="VARCHAR"/>
+        <result column="svg_icon" property="svgIcon" jdbcType="LONGVARCHAR"/>
+        <result column="sender_id" property="senderId" jdbcType="BIGINT"/>
+        <result column="receiver_id" property="receiverId" jdbcType="BIGINT"/>
+        <result column="family_id" property="familyId" jdbcType="BIGINT"/>
+        <result column="sent_time" property="sentTime" jdbcType="TIMESTAMP"/>
+        <result column="type" property="type" jdbcType="TINYINT"/>
+        <result column="priority" property="priority" jdbcType="TINYINT"/>
+        <result column="is_one_click" property="isOneClick" jdbcType="BOOLEAN"/>
+        <result column="role_id" property="roleId" jdbcType="BIGINT"/>
+        <result column="role_name" property="roleName" jdbcType="VARCHAR"/>
+        <result column="is_read" property="isRead" jdbcType="BOOLEAN"/>
+        <result column="read_time" property="readTime" jdbcType="TIMESTAMP"/>
+        <result column="device_token_id" property="deviceTokenId" jdbcType="BIGINT"/>
+        <result column="device_token" property="deviceToken" jdbcType="VARCHAR"/>
+        <result column="platform" property="platform" jdbcType="VARCHAR"/>
+        <result column="push_status" property="pushStatus" jdbcType="TINYINT"/>
+        <result column="push_time" property="pushTime" jdbcType="TIMESTAMP"/>
+        <result column="push_response" property="pushResponse" jdbcType="LONGVARCHAR"/>
+        <result column="error_code" property="errorCode" jdbcType="VARCHAR"/>
+        <result column="error_message" property="errorMessage" jdbcType="VARCHAR"/>
+        <result column="retry_count" property="retryCount" jdbcType="INTEGER"/>
+        <result column="status" property="status" jdbcType="TINYINT"/>
+        <result column="remark" property="remark" jdbcType="VARCHAR"/>
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+        <result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>
+        <result column="create_by" property="createBy" jdbcType="BIGINT"/>
+        <result column="update_by" property="updateBy" jdbcType="BIGINT"/>
+        <result column="is_deleted" property="isDeleted" jdbcType="BOOLEAN"/>
+        <result column="version" property="version" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <!-- 根据模版ID查询推送记录 -->
+    <select id="selectByTemplateId" resultMap="BaseResultMap">
+        SELECT * FROM notification_push_records
+        WHERE template_id = #{templateId}
+        AND is_deleted = FALSE
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据接收者ID查询推送记录 -->
+    <select id="selectByReceiverId" resultMap="BaseResultMap">
+        SELECT * FROM notification_push_records
+        WHERE receiver_id = #{receiverId}
+        AND is_deleted = FALSE
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据家庭ID查询推送记录 -->
+    <select id="selectByFamilyId" resultMap="BaseResultMap">
+        SELECT * FROM notification_push_records
+        WHERE family_id = #{familyId}
+        AND is_deleted = FALSE
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 分页查询推送记录 -->
+    <select id="selectPushRecordPage" resultMap="BaseResultMap">
+        SELECT * FROM notification_push_records
+        WHERE is_deleted = FALSE
+        <if test="templateId != null">
+            AND template_id = #{templateId}
+        </if>
+        <if test="senderId != null">
+            AND sender_id = #{senderId}
+        </if>
+        <if test="receiverId != null">
+            AND receiver_id = #{receiverId}
+        </if>
+        <if test="familyId != null">
+            AND family_id = #{familyId}
+        </if>
+        <if test="pushStatus != null">
+            AND push_status = #{pushStatus}
+        </if>
+        <if test="isRead != null">
+            AND is_read = #{isRead}
+        </if>
+        <if test="startTime != null">
+            AND create_time >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND create_time &lt;= #{endTime}
+        </if>
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 标记消息为已读 -->
+    <update id="markAsRead">
+        UPDATE notification_push_records
+        SET is_read = TRUE,
+            read_time = #{readTime},
+            update_time = NOW()
+        WHERE id = #{id}
+        AND is_deleted = FALSE
+    </update>
+
+    <!-- 更新推送状态 -->
+    <update id="updatePushStatus">
+        UPDATE notification_push_records
+        SET push_status = #{pushStatus},
+            push_time = #{pushTime},
+            push_response = #{pushResponse},
+            error_code = #{errorCode},
+            error_message = #{errorMessage},
+            update_time = NOW()
+        WHERE id = #{id}
+        AND is_deleted = FALSE
+    </update>
+
+    <!-- 查询未读消息数量 -->
+    <select id="countUnreadMessages" resultType="int">
+        SELECT COUNT(*)
+        FROM notification_push_records
+        WHERE receiver_id = #{receiverId}
+        AND is_read = FALSE
+        AND is_deleted = FALSE
+        <if test="familyId != null">
+            AND family_id = #{familyId}
+        </if>
+    </select>
+
+    <!-- 查询推送失败的记录（用于重试） -->
+    <select id="selectFailedPushRecords" resultMap="BaseResultMap">
+        SELECT * FROM notification_push_records
+        WHERE push_status = 2
+        AND retry_count &lt; #{maxRetryCount}
+        AND is_deleted = FALSE
+        ORDER BY create_time DESC
+        LIMIT 100
+    </select>
+
+    <!-- 增加重试次数 -->
+    <update id="incrementRetryCount">
+        UPDATE notification_push_records
+        SET retry_count = retry_count + 1,
+            update_time = NOW()
+        WHERE id = #{id}
+        AND is_deleted = FALSE
+    </update>
+
+</mapper>

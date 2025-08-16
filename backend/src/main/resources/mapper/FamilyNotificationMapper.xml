@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.growth.dao.FamilyNotificationMapper">
+
+    <!-- 通用结果映射 -->
+    <resultMap id="BaseResultMap" type="com.growth.entity.FamilyNotification">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="title" property="title" jdbcType="VARCHAR"/>
+        <result column="content" property="content" jdbcType="VARCHAR"/>
+        <result column="description" property="description" jdbcType="VARCHAR"/>
+        <result column="svg_icon" property="svgIcon" jdbcType="LONGVARCHAR"/>
+        <result column="card_back_color" property="cardBackColor" jdbcType="VARCHAR"/>
+        <result column="creator_id" property="creatorId" jdbcType="BIGINT"/>
+        <result column="family_id" property="familyId" jdbcType="BIGINT"/>
+        <result column="type" property="type" jdbcType="TINYINT"/>
+        <result column="category" property="category" jdbcType="VARCHAR"/>
+        <result column="usage_count" property="usageCount" jdbcType="INTEGER"/>
+        <result column="is_active" property="isActive" jdbcType="BOOLEAN"/>
+        <result column="receiver_role_ids" property="receiverUserIds" jdbcType="LONGVARCHAR" 
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result column="remark" property="remark" jdbcType="VARCHAR"/>
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+        <result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>
+        <result column="create_by" property="createBy" jdbcType="BIGINT"/>
+        <result column="update_by" property="updateBy" jdbcType="BIGINT"/>
+        <result column="is_deleted" property="isDeleted" jdbcType="BOOLEAN"/>
+        <result column="version" property="version" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <!-- 根据家庭ID查询通知模版列表 -->
+    <select id="selectByFamilyId" resultMap="BaseResultMap">
+        SELECT * FROM family_notifications
+        WHERE family_id = #{familyId}
+        AND is_deleted = FALSE
+        ORDER BY is_active DESC, usage_count DESC, create_time DESC
+    </select>
+
+    <!-- 根据创建者ID查询通知模版列表 -->
+    <select id="selectByCreatorId" resultMap="BaseResultMap">
+        SELECT * FROM family_notifications
+        WHERE creator_id = #{creatorId}
+        AND is_deleted = FALSE
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 分页查询家庭通知模版 -->
+    <select id="selectNotificationPage" resultMap="BaseResultMap">
+        SELECT * FROM family_notifications
+        WHERE is_deleted = FALSE
+        <if test="familyId != null">
+            AND family_id = #{familyId}
+        </if>
+        <if test="creatorId != null">
+            AND creator_id = #{creatorId}
+        </if>
+        <if test="type != null">
+            AND type = #{type}
+        </if>
+        <if test="category != null and category != ''">
+            AND category = #{category}
+        </if>
+        <if test="isActive != null">
+            AND is_active = #{isActive}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (title LIKE CONCAT('%', #{keyword}, '%') OR content LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        ORDER BY is_active DESC, usage_count DESC, create_time DESC
+    </select>
+
+    <!-- 更新模版使用次数 -->
+    <update id="incrementUsageCount">
+        UPDATE family_notifications
+        SET usage_count = usage_count + 1,
+            update_time = NOW()
+        WHERE id = #{id}
+        AND is_deleted = FALSE
+    </update>
+
+    <!-- 根据家庭ID和类型查询启用的通知模版 -->
+    <select id="selectActiveByFamilyIdAndType" resultMap="BaseResultMap">
+        SELECT * FROM family_notifications
+        WHERE family_id = #{familyId}
+        AND type = #{type}
+        AND is_active = TRUE
+        AND is_deleted = FALSE
+        ORDER BY usage_count DESC, create_time DESC
+    </select>
+
+</mapper>
