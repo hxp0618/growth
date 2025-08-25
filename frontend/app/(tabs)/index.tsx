@@ -416,7 +416,7 @@ export default function HomeScreen() {
                 <ThemedText style={styles.activityIcon}>👨</ThemedText>
                 <View style={styles.activityContent}>
                   <ThemedText style={[styles.activityText, { color: colors.text }]}>
-                    老公：已完成"购买孕妇奶粉"
+                    老公：已完成&quot;购买孕妇奶粉&quot;
                   </ThemedText>
                   <ThemedText style={[styles.activityTime, { color: colors.textSecondary }]}>
                     2小时前

@@ -1,5 +1,5 @@
-import { ApiClient } from '@/utils/apiClient';
-import { ApiResponse, UpdateUserProfileRequest, UserProfileResponse } from '@/types/api';
+import { ApiClient } from '../utils/apiClient';
+import { ApiResponse, UpdateUserProfileRequest, UserProfileResponse } from '../types/api';
 
 /**
  * 用户个人信息服务

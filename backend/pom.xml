@@ -21,12 +21,14 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <mybatis-plus.version>3.5.12</mybatis-plus.version>
         <redission.version>3.46.0</redission.version>
-        <knife4j-openapi3-jakarta-spring-boot-starter.version>4.5.0</knife4j-openapi3-jakarta-spring-boot-starter.version>
+        <knife4j-openapi3-jakarta-spring-boot-starter.version>4.5.0
+        </knife4j-openapi3-jakarta-spring-boot-starter.version>
         <hutool.version>5.8.34</hutool.version>
         <annotations.version>26.0.2</annotations.version>
         <sa-token.version>1.39.0</sa-token.version>
         <spring-ai.version>1.0.0-SNAPSHOT</spring-ai.version>
         <httpclient5.version>5.5</httpclient5.version>
+        <minio.version>8.5.17</minio.version>
     </properties>
 
     <repositories>
@@ -149,7 +151,7 @@
         <dependency>
             <groupId>io.minio</groupId>
             <artifactId>minio</artifactId>
-            <version>8.5.2</version>
+            <version>${minio.version}</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.apache.httpcomponents.client5/httpclient5 -->
         <dependency>

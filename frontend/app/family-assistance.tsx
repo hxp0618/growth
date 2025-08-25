@@ -35,7 +35,7 @@ export default function FamilyAssistanceScreen() {
             </ThemedText>
             <ThemedText style={[styles.infoText, { color: colors.textSecondary }]}>
               • 只显示当前在线的家庭成员{'\n'}
-              • 点击"邀请更多成员"可查看家庭邀请码{'\n'}
+              • 点击&quot;邀请更多成员&quot;可查看家庭邀请码{'\n'}
               • 邀请码可以分享给其他家庭成员{'\n'}
               • 新成员可以通过邀请码加入家庭
             </ThemedText>

@@ -101,3 +101,12 @@ export const createTextStyle = (
   fontWeight: getFontWeight(weight),
   ...(lineHeight && { lineHeight }),
 });
+
+// 导出Fonts对象，供组件使用
+export const Fonts = {
+  light: getFontFamily('light'),
+  regular: getFontFamily('regular'),
+  medium: getFontFamily('medium'),
+  semiBold: getFontFamily('semibold'),
+  bold: getFontFamily('bold'),
+};

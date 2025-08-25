@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.growth.dao.FamilyTaskMapper">
+
+    <!-- 任务响应结果映射 -->
+    <resultMap id="FamilyTaskResponseMap" type="com.growth.entity.response.FamilyTaskResponse">
+        <id column="id" property="id"/>
+        <result column="title" property="title"/>
+        <result column="description" property="description"/>
+        <result column="status" property="status"/>
+        <result column="assigned_user_ids" property="assignedUserIds" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result column="creator_id" property="creatorId"/>
+        <result column="family_id" property="familyId"/>
+        <result column="priority" property="priority"/>
+        <result column="expected_completion_time" property="expectedCompletionTime"/>
+        <result column="actual_completion_time" property="actualCompletionTime"/>
+        <result column="remark" property="remark"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="create_by" property="createBy"/>
+        <result column="update_by" property="updateBy"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="version" property="version"/>
+        <!-- 关联查询指定人昵称列表 -->
+        <result column="assigned_user_nicknames" property="assignedUserNicknames"/>
+        <!-- 关联查询创建者昵称 -->
+        <result column="creator_nickname" property="creatorNickname"/>
+        <!-- 状态文本 -->
+        <result column="status_text" property="statusText"/>
+        <!-- 优先级文本 -->
+        <result column="priority_text" property="priorityText"/>
+    </resultMap>
+
+    <!-- 分页查询家庭任务列表 -->
+    <select id="selectTaskPage" resultMap="FamilyTaskResponseMap">
+        SELECT 
+            t.id,
+            t.title,
+            t.description,
+            t.status,
+            t.assigned_user_ids,
+            t.creator_id,
+            t.family_id,
+            t.priority,
+            t.expected_completion_time,
+            t.actual_completion_time,
+            t.remark,
+            t.create_time,
+            t.update_time,
+            t.create_by,
+            t.update_by,
+            t.is_deleted,
+            t.version,
+            creator_user.nickname as creator_nickname,
+            (SELECT GROUP_CONCAT(u.nickname SEPARATOR ',')
+             FROM sys_user u
+             WHERE JSON_CONTAINS(t.assigned_user_ids, CAST(u.id AS JSON))) as assigned_user_nicknames,
+            CASE t.status
+                WHEN 1 THEN '待开始'
+                WHEN 2 THEN '进行中'
+                WHEN 3 THEN '已完成'
+                WHEN 4 THEN '已取消'
+                ELSE '未知'
+            END as status_text,
+            CASE t.priority
+                WHEN 1 THEN '低'
+                WHEN 2 THEN '中'
+                WHEN 3 THEN '高'
+                WHEN 4 THEN '紧急'
+                ELSE '中'
+            END as priority_text
+        FROM family_tasks t
+        LEFT JOIN sys_user creator_user ON t.creator_id = creator_user.id
+        WHERE t.family_id = #{familyId}
+        AND t.is_deleted = FALSE
+        <if test="status != null">
+            AND t.status = #{status}
+        </if>
+        <if test="assignedUserId != null">
+            AND JSON_CONTAINS(t.assigned_user_ids, #{assignedUserId})
+        </if>
+        <if test="creatorId != null">
+            AND t.creator_id = #{creatorId}
+        </if>
+        ORDER BY t.priority DESC, t.create_time DESC
+    </select>
+
+    <!-- 查询家庭任务列表 -->
+    <select id="selectTaskList" resultMap="FamilyTaskResponseMap">
+        SELECT 
+            t.id,
+            t.title,
+            t.description,
+            t.status,
+            t.assigned_user_ids,
+            t.creator_id,
+            t.family_id,
+            t.priority,
+            t.expected_completion_time,
+            t.actual_completion_time,
+            t.remark,
+            t.create_time,
+            t.update_time,
+            t.create_by,
+            t.update_by,
+            t.is_deleted,
+            t.version,
+            creator_user.nickname as creator_nickname,
+            (SELECT GROUP_CONCAT(u.nickname SEPARATOR ',')
+             FROM sys_user u
+             WHERE JSON_CONTAINS(t.assigned_user_ids, CAST(u.id AS JSON))) as assigned_user_nicknames,
+            CASE t.status
+                WHEN 1 THEN '待开始'
+                WHEN 2 THEN '进行中'
+                WHEN 3 THEN '已完成'
+                WHEN 4 THEN '已取消'
+                ELSE '未知'
+            END as status_text,
+            CASE t.priority
+                WHEN 1 THEN '低'
+                WHEN 2 THEN '中'
+                WHEN 3 THEN '高'
+                WHEN 4 THEN '紧急'
+                ELSE '中'
+            END as priority_text
+        FROM family_tasks t
+        LEFT JOIN sys_user creator_user ON t.creator_id = creator_user.id
+        WHERE t.family_id = #{familyId}
+        AND t.is_deleted = FALSE
+        <if test="status != null">
+            AND t.status = #{status}
+        </if>
+        <if test="assignedUserId != null">
+            AND JSON_CONTAINS(t.assigned_user_ids, #{assignedUserId})
+        </if>
+        <if test="creatorId != null">
+            AND t.creator_id = #{creatorId}
+        </if>
+        ORDER BY t.priority DESC, t.create_time DESC
+    </select>
+
+    <!-- 根据ID查询任务详情 -->
+    <select id="selectTaskDetail" resultMap="FamilyTaskResponseMap">
+        SELECT 
+            t.id,
+            t.title,
+            t.description,
+            t.status,
+            t.assigned_user_ids,
+            t.creator_id,
+            t.family_id,
+            t.priority,
+            t.expected_completion_time,
+            t.actual_completion_time,
+            t.remark,
+            t.create_time,
+            t.update_time,
+            t.create_by,
+            t.update_by,
+            t.is_deleted,
+            t.version,
+            creator_user.nickname as creator_nickname,
+            (SELECT GROUP_CONCAT(u.nickname SEPARATOR ',')
+             FROM sys_user u
+             WHERE JSON_CONTAINS(t.assigned_user_ids, CAST(u.id AS JSON))) as assigned_user_nicknames,
+            CASE t.status
+                WHEN 1 THEN '待开始'
+                WHEN 2 THEN '进行中'
+                WHEN 3 THEN '已完成'
+                WHEN 4 THEN '已取消'
+                ELSE '未知'
+            END as status_text,
+            CASE t.priority
+                WHEN 1 THEN '低'
+                WHEN 2 THEN '中'
+                WHEN 3 THEN '高'
+                WHEN 4 THEN '紧急'
+                ELSE '中'
+            END as priority_text
+        FROM family_tasks t
+        LEFT JOIN sys_user creator_user ON t.creator_id = creator_user.id
+        WHERE t.id = #{id}
+        AND t.is_deleted = FALSE
+    </select>
+
+    <!-- 统计家庭任务数量 -->
+    <select id="countTasks" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM family_tasks t
+        WHERE t.family_id = #{familyId}
+        AND t.is_deleted = FALSE
+        <if test="status != null">
+            AND t.status = #{status}
+        </if>
+        <if test="assignedUserId != null">
+            AND JSON_CONTAINS(t.assigned_user_ids, #{assignedUserId})
+        </if>
+    </select>
+
+</mapper>

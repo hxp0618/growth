@@ -1,5 +1,5 @@
-import { ApiResponse, PregnancyProgressResponse } from '@/types/api';
-import { ApiClient } from '@/utils/apiClient';
+import { ApiResponse } from '../types/api';
+import { ApiClient } from '../utils/apiClient';
 
 /**
  * 孕期进度服务
@@ -10,8 +10,8 @@ export class PregnancyProgressService {
    * @param userId 用户ID
    * @returns 孕期进度信息
    */
-  static async getPregnancyProgressByUserId(userId: number): Promise<PregnancyProgressResponse> {
-    const response = await ApiClient.get<PregnancyProgressResponse>(
+  static async getPregnancyProgressByUserId(userId: number): Promise<any> {
+    const response = await ApiClient.get<any>(
       `/pregnancy-progress/user/${userId}`
     );
     
@@ -27,8 +27,8 @@ export class PregnancyProgressService {
    * 如果当前用户是孕妇，返回自己的进度；如果不是孕妇，返回其所属家庭中孕妇的进度
    * @returns 孕期进度信息
    */
-  static async getFamilyPregnancyProgress(): Promise<PregnancyProgressResponse | null> {
-    const response = await ApiClient.get<PregnancyProgressResponse>(
+  static async getFamilyPregnancyProgress(): Promise<any | null> {
+    const response = await ApiClient.get<any>(
       `/pregnancy-progress/family`
     );
     

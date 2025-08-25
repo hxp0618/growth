@@ -38,7 +38,7 @@ export interface NetworkConnectionInfo {
 }
 
 export class NetworkDiagnosticsService {
-  private static API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://192.168.31.60:8080/api';
+  private static API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8080/api';
   
   // 默认重试配置
   private static DEFAULT_RETRY_CONFIG: RetryConfig = {

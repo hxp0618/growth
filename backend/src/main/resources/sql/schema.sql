@@ -408,3 +408,41 @@ INSERT INTO `notifications` (`title`, `content`, `svg_icon`, `creator_id`, `fami
 ('预约提醒', '有重要的医疗预约或检查', '📅', 1, 1, 2, 'system', '系统预设模板', 1),
 ('用餐提醒', '该吃饭了，注意营养均衡', '🍽️', 1, 1, 1, 'system', '系统预设模板', 1),
 ('运动提醒', '适当运动有益健康', '🤸‍♀️', 1, 1, 1, 'system', '系统预设模板', 1);
+
+
+
+-- 家庭任务表
+CREATE TABLE IF NOT EXISTS `family_tasks` (
+                                              `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '任务ID',
+                                              `title` varchar(100) NOT NULL COMMENT '任务标题',
+                                              `description` text COMMENT '任务说明',
+                                              `status` tinyint(4) NOT NULL DEFAULT '1' COMMENT '任务状态（1：待开始，2：进行中，3：已完成，4：已取消）',
+                                              `assigned_user_ids` json DEFAULT NULL COMMENT '指定人用户ID列表（JSON数组）',
+                                              `creator_id` bigint(20) NOT NULL COMMENT '创建者用户ID',
+                                              `family_id` bigint(20) NOT NULL COMMENT '所属家庭ID',
+                                              `priority` tinyint(4) NOT NULL DEFAULT '2' COMMENT '优先级（1：低，2：中，3：高，4：紧急）',
+                                              `expected_completion_time` datetime DEFAULT NULL COMMENT '预计完成时间',
+                                              `actual_completion_time` datetime DEFAULT NULL COMMENT '实际完成时间',
+                                              `remark` varchar(200) DEFAULT NULL COMMENT '备注信息',
+                                              `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+                                              `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+                                              `create_by` bigint(20) COMMENT '创建人ID',
+                                              `update_by` bigint(20) COMMENT '更新人ID',
+                                              `is_deleted` boolean DEFAULT FALSE COMMENT '逻辑删除标识（0：未删除，1：已删除）',
+                                              `version` int(11) DEFAULT 0 COMMENT '版本号（乐观锁）',
+                                              PRIMARY KEY (`id`),
+                                              KEY `idx_family_id` (`family_id`),
+                                              KEY `idx_creator_id` (`creator_id`),
+                                              KEY `idx_status` (`status`),
+                                              KEY `idx_priority` (`priority`),
+                                              KEY `idx_create_time` (`create_time`),
+                                              KEY `idx_is_deleted` (`is_deleted`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='家庭任务表';
+
+-- 插入示例数据
+INSERT INTO `family_tasks` (`title`, `description`, `status`, `assigned_user_ids`, `creator_id`, `family_id`, `priority`, `expected_completion_time`, `remark`) VALUES
+                                                                                                                                                                    ('购买孕妇奶粉', '需要购买适合孕妇的营养奶粉，建议选择知名品牌', 2, '[1]', 2, 1, 3, '2024-01-15 18:00:00', '优先考虑有机奶粉'),
+                                                                                                                                                                    ('预约下次产检', '预约医院的下次产检时间，确认检查项目', 3, '[2]', 1, 1, 4, '2024-01-10 14:00:00', '已完成预约，时间已确认'),
+                                                                                                                                                                    ('准备待产包', '准备孕妇和新生儿的待产用品', 1, '[1, 2]', 2, 1, 2, '2024-01-20 12:00:00', '可以参考医院提供的清单'),
+                                                                                                                                                                    ('学习育儿知识', '阅读育儿书籍，了解新生儿护理要点', 1, '[2]', 1, 1, 2, '2024-01-25 20:00:00', '重点学习喂养和护理知识'),
+                                                                                                                                                                    ('整理婴儿房', '整理和布置婴儿房，准备婴儿用品', 2, '[1]', 2, 1, 3, '2024-01-18 16:00:00', '需要购买一些装饰品');

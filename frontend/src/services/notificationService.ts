@@ -1,8 +1,8 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ApiClient } from '@/utils/apiClient';
-import { NetworkDiagnosticsService } from '@/utils/networkDiagnostics';
+import { ApiClient } from '../utils/apiClient';
+import { NetworkDiagnosticsService } from '../utils/networkDiagnostics';
 import {
   SendOneClickNotificationRequest,
   CreateNotificationRequest,
@@ -11,7 +11,7 @@ import {
   PageResult,
   NotificationTemplate,
   FamilyNotification
-} from '@/types/api';
+} from '../types/api';
 
 // 配置通知处理行为
 Notifications.setNotificationHandler({

@@ -7,11 +7,11 @@ export interface User {
 
 export interface ChartData {
   labels: string[];
-  datasets: Array<{
+  datasets: {
     data: number[];
     color?: (opacity?: number) => string;
     strokeWidth?: number;
-  }>;
+  }[];
 }
 
 export interface CalendarEvent {

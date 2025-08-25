@@ -248,3 +248,56 @@ export interface NotificationTemplate {
   category: 'health' | 'emergency' | 'reminder' | 'sharing' | 'custom';
   description?: string;
 }
+
+// 家庭任务相关类型
+export interface CreateFamilyTaskRequest {
+  title: string;
+  description?: string;
+  assignedUserIds: number[];
+  familyId: number;
+  priority?: number;
+  expectedCompletionTime?: string;
+  remark?: string;
+}
+
+export interface UpdateFamilyTaskRequest {
+  id: number;
+  title?: string;
+  description?: string;
+  status?: number;
+  assignedUserIds?: number[];
+  priority?: number;
+  expectedCompletionTime?: string;
+  actualCompletionTime?: string;
+  remark?: string;
+}
+
+export interface FamilyTaskResponse {
+  id: number;
+  title: string;
+  description?: string;
+  status: number;
+  statusText: string;
+  assignedUserIds: number[];
+  assignedUserNicknames: string; // 逗号分隔的字符串
+  creatorId: number;
+  creatorNickname: string;
+  familyId: number;
+  priority: number;
+  priorityText: string;
+  expectedCompletionTime?: string;
+  actualCompletionTime?: string;
+  remark?: string;
+  createTime: string;
+  updateTime: string;
+  createBy: number;
+  updateBy: number;
+  isDeleted: boolean;
+  version: number;
+}
+
+export interface ReassignFamilyTaskRequest {
+  taskId: number;
+  newAssignedUserId: number;
+  reason?: string;
+}

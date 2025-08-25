@@ -6,6 +6,7 @@ export { familyRoleService } from './familyRoleService';
 export { healthService } from './healthService';
 export { pregnancyProgressService } from './pregnancyProgressService';
 export { notificationService } from './notificationService';
+export { familyTaskService } from './familyTaskService';
 
 // 导出类型
 export * from '../types/api';
